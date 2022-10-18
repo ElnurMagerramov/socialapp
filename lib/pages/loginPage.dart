@@ -1,4 +1,5 @@
 import 'package:app/pages/createAccount.dart';
+import 'package:app/pages/forgotPassword.dart';
 import 'package:app/services/firestoreService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
@@ -158,7 +159,7 @@ class _LoginPageState extends State<LoginPage> {
           SizedBox(
             height: 20.0,
           ),
-          Center(child: Text('forget password')),
+          Center(child: InkWell(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgotPassword())),child: Text('forget password'))),
         ],
       ),
     );
