@@ -23,6 +23,10 @@ class AdminService{
   Future<dynamic> logout(){
     return _firebaseAuth.signOut();
   }
+  Future<void> resetPassword(String email) async{
+    await _firebaseAuth.sendPasswordResetEmail(email: email);
+  }
+
   loginWithGoogle() async {
     GoogleSignInAccount? googleAccount=await GoogleSignIn().signIn();
     GoogleSignInAuthentication? googleAdminCard= await googleAccount?.authentication;
