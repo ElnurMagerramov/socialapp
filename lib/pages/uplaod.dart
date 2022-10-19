@@ -7,6 +7,7 @@ import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 class UplaodPage extends StatefulWidget {
   const UplaodPage({super.key});
@@ -16,6 +17,8 @@ class UplaodPage extends StatefulWidget {
 }
 
 class _UplaodPageState extends State<UplaodPage> {
+  late VideoPlayerController _videoPlayerController;
+  String? fileType;
   File? file;
   bool loading = false;
   TextEditingController descriptionController = TextEditingController();
@@ -70,12 +73,39 @@ class _UplaodPageState extends State<UplaodPage> {
             : SizedBox(
                 height: 0.0,
               ),
-        AspectRatio(
-            aspectRatio: 16.0 / 9.0,
-            child: Image.file(
-              File("${file?.path}"),
-              fit: BoxFit.cover,
-            )),
+        fileType == "image"
+            ? AspectRatio(
+                aspectRatio: 16.0 / 9.0,
+                child: Image.file(
+                  File("${file?.path}"),
+                  fit: BoxFit.cover,
+                ))
+            : Center(
+                child: VideoPlayerController.file(File("${file?.path}"))
+                        .value
+                        .isInitialized
+                    ? Column(
+                        children: [
+                          AspectRatio(
+                              aspectRatio: VideoPlayerController.file(
+                                      File("${file?.path}"))
+                                  .value
+                                  .aspectRatio,
+                              child: VideoPlayer(VideoPlayerController.file(
+                                  File("${file?.path}")))),
+                          TextButton(
+                            onPressed: () {
+                              VideoPlayerController.file(File("${file?.path}"))
+                                  .value
+                                  .isPlaying;
+                            },
+                            child: Icon(Icons.pause
+                            ),
+                          ),
+                        ],
+                      )
+                    : CircularProgressIndicator(),
+              ),
         SizedBox(
           height: 20.0,
         ),
@@ -102,7 +132,8 @@ class _UplaodPageState extends State<UplaodPage> {
       });
       String? photoURL = await StorageService().postPhotoUpload(file!);
       // print("${photoURL}");
-      String? activeUserID = Provider.of<AdminService>(context, listen: false).activeUserID;
+      String? activeUserID =
+          Provider.of<AdminService>(context, listen: false).activeUserID;
       await FireStoreService().createPost(
         postPhotoURL: photoURL,
         description: descriptionController.text,
@@ -110,10 +141,10 @@ class _UplaodPageState extends State<UplaodPage> {
         location: locationController.text,
       );
       setState(() {
-        loading=false;
+        loading = false;
         descriptionController.clear();
         locationController.clear();
-        file=null;
+        file = null;
       });
     }
   }
@@ -132,9 +163,21 @@ class _UplaodPageState extends State<UplaodPage> {
                 },
               ),
               SimpleDialogOption(
-                child: Text("Upload from Galery"),
+                child: Text("Upload photo from Galery"),
                 onPressed: () {
                   uploadFromGalery();
+                },
+              ),
+              SimpleDialogOption(
+                child: Text("Take a video"),
+                onPressed: () {
+                  takeVideo();
+                },
+              ),
+              SimpleDialogOption(
+                child: Text("Upload video from Galery"),
+                onPressed: () {
+                  uploadVideoGallery();
                 },
               ),
               SimpleDialogOption(
@@ -158,8 +201,11 @@ class _UplaodPageState extends State<UplaodPage> {
   }
 
   takePhoto() async {
+    setState(() {
+      fileType = "image";
+    });
     Navigator.pop(context);
-    var image = await ImagePicker().getImage(
+    var image = await ImagePicker().pickImage(
         source: ImageSource.camera,
         maxWidth: 800.0,
         maxHeight: 600.0,
@@ -170,12 +216,47 @@ class _UplaodPageState extends State<UplaodPage> {
   }
 
   uploadFromGalery() async {
+    setState(() {
+      fileType = "image";
+    });
     Navigator.pop(context);
-    var image = await ImagePicker().getImage(
+    var image = await ImagePicker().pickImage(
         source: ImageSource.gallery,
         maxWidth: 800.0,
         maxHeight: 600.0,
         imageQuality: 80);
+    setState(() {
+      file = File("${image?.path}");
+    });
+  }
+
+  takeVideo() async {
+    setState(() {
+      fileType = "video";
+    });
+    Navigator.pop(context);
+    var video = await ImagePicker().pickVideo(
+        source: ImageSource.camera, maxDuration: Duration(seconds: 30));
+        setState(() {
+      file = File("${video?.path}");
+    });
+    _videoPlayerController = VideoPlayerController.file(file!)
+      ..initialize().then((_) {
+        setState(() {});
+        _videoPlayerController.play();
+      });
+    setState(() {
+      file = File("${video?.path}");
+    });
+  }
+
+  uploadVideoGallery() async {
+    setState(() {
+      fileType = "video";
+    });
+    Navigator.pop(context);
+    var image = await ImagePicker().pickVideo(
+        source: ImageSource.gallery, maxDuration: Duration(seconds: 30));
     setState(() {
       file = File("${image?.path}");
     });

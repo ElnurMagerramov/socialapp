@@ -21,42 +21,49 @@ class _ProfilePageState extends State<ProfilePage> {
   int _posts = 0;
   int _followers = 0;
   int _followings = 0;
-  List<Post> _postsDetails=[];
-  String postStyle="list";
+  List<Post> _postsDetails = [];
+  String postStyle = "list";
   String? _activeUserID;
   Users? _profileOwner;
-  bool _isFollow=false;
+  bool _isFollow = false;
   _getFollowerNumber() async {
-    int followerNumber= await FireStoreService().followerNumber(widget.ptofileOwnerID);
+    int followerNumber =
+        await FireStoreService().followerNumber(widget.ptofileOwnerID);
     if (mounted) {
-  setState(() {
-    _followers=followerNumber;
-  });
-}
+      setState(() {
+        _followers = followerNumber;
+      });
+    }
   }
+
   _getFollowingNumber() async {
-    int followingNumber= await FireStoreService().followingNumber(widget.ptofileOwnerID);
+    int followingNumber =
+        await FireStoreService().followingNumber(widget.ptofileOwnerID);
     if (mounted) {
-  setState(() {
-    _followings=followingNumber;
-  });
-}
+      setState(() {
+        _followings = followingNumber;
+      });
+    }
   }
-  _getPosts()async{
-     List<Post> posts= await FireStoreService().getPosts(widget.ptofileOwnerID);
-     if (mounted) {
-  setState(() {
-    _postsDetails=posts;
-    _posts=_postsDetails.length;
-  });
-}
+
+  _getPosts() async {
+    List<Post> posts = await FireStoreService().getPosts(widget.ptofileOwnerID);
+    if (mounted) {
+      setState(() {
+        _postsDetails = posts;
+        _posts = _postsDetails.length;
+      });
+    }
   }
+
   _followControl() async {
-    bool isFollow = await FireStoreService().followControl(_activeUserID, widget.ptofileOwnerID);
+    bool isFollow = await FireStoreService()
+        .followControl(_activeUserID, widget.ptofileOwnerID);
     setState(() {
-      _isFollow=isFollow;
+      _isFollow = isFollow;
     });
   }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -64,9 +71,11 @@ class _ProfilePageState extends State<ProfilePage> {
     _getFollowerNumber();
     _getFollowingNumber();
     _getPosts();
-    _activeUserID=Provider.of<AdminService>(context,listen: false).activeUserID;
+    _activeUserID =
+        Provider.of<AdminService>(context, listen: false).activeUserID;
     _followControl();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,13 +87,17 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         backgroundColor: Colors.grey[100],
         actions: [
-          widget.ptofileOwnerID==_activeUserID?IconButton(
-            onPressed: _logout,
-            icon: Icon(
-              Icons.exit_to_app,
-              color: Colors.black,
-            ),
-          ): IconButton(onPressed: (){}, icon: Icon(Icons.more_vert))
+          widget.ptofileOwnerID == _activeUserID
+              ? IconButton(
+                  onPressed: _logout,
+                  icon: Icon(
+                    Icons.exit_to_app,
+                    color: Colors.black,
+                  ),
+                )
+              : IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.more_vert)) //burda bir funksiya ola biler
         ],
       ),
       body: FutureBuilder(
@@ -93,58 +106,114 @@ class _ProfilePageState extends State<ProfilePage> {
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
-            _profileOwner=snapshot.data;
+            _profileOwner = snapshot.data;
             return ListView(
               children: [
                 _profileDetails(snapshot.data),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        TextButton(
+                            onPressed: () {
+                              setState(() {
+                                postStyle = "grid";
+                              });
+                            },
+                            child: Icon(
+                              Icons.grid_view,
+                              color: postStyle == "grid"
+                                  ? Colors.blue
+                                  : Colors.grey,
+                            )),
+                        Container(
+                          height: 3,
+                          width: 200,
+                          color:
+                              postStyle == "grid" ? Colors.blue : Colors.grey,
+                        )
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        TextButton(
+                            onPressed: () {
+                              setState(() {
+                                postStyle = "list";
+                              });
+                            },
+                            child: Icon(
+                              Icons.view_agenda,
+                              color: postStyle == "list"
+                                  ? Colors.blue
+                                  : Colors.grey,
+                            )),
+                        Container(
+                          height: 3,
+                          width: 200,
+                          color:
+                              postStyle == "list" ? Colors.blue : Colors.grey,
+                        )
+                      ],
+                    ),
+                  ],
+                ),
                 _showPosts(snapshot.data)
-                ],
+              ],
             );
           }),
     );
   }
-  Widget _showPosts(user){
-     if(postStyle=="list"){
+
+  Widget _showPosts(user) {
+    if (postStyle == "list") {
       return ListView.builder(
         primary: false,
         shrinkWrap: true,
         itemCount: _postsDetails.length,
         itemBuilder: (context, index) {
-          return PostCard(post: _postsDetails[index],user: user);
+          return PostCard(post: _postsDetails[index], user: user);
         },
-        );
-     }else{
-      List<GridTile> grids = [];
-    _postsDetails.forEach(((post) {
-      grids.add(_createGrid(post));
-    }));
-    return GridView.count(
-      shrinkWrap: true,
-      crossAxisCount: 3,
-      mainAxisSpacing: 2.0,
-      crossAxisSpacing: 2.0,
-      childAspectRatio: 1.0,
-      physics: NeverScrollableScrollPhysics(),
-      children: grids
-      // [
-        // GridTile(child: Container(
-        //   color: Colors.blue,
-        // ),
-        // header: Text('Ust'),
-        // footer: Text('Ust'),
-        // ),
-        // GridTile(child: Container(
-        //   color: Colors.blue,
-        // ),
-        // )
-      // ],
       );
-     }
+    } else {
+      List<GridTile> grids = [];
+      _postsDetails.forEach(((post) {
+        grids.add(_createGrid(post));
+      }));
+      return GridView.count(
+          shrinkWrap: true,
+          crossAxisCount: 3,
+          mainAxisSpacing: 2.0,
+          crossAxisSpacing: 2.0,
+          childAspectRatio: 1.0,
+          physics: NeverScrollableScrollPhysics(),
+          children: grids
+          // [
+          // GridTile(child: Container(
+          //   color: Colors.blue,
+          // ),
+          // header: Text('Ust'),
+          // footer: Text('Ust'),
+          // ),
+          // GridTile(child: Container(
+          //   color: Colors.blue,
+          // ),
+          // )
+          // ],
+          );
+    }
   }
-  GridTile _createGrid(Post post){
-    return GridTile(child: GridTile(
-      child: Image.network('${post.postPhotoURL}',fit: BoxFit.cover,)));
+
+  GridTile _createGrid(Post post) {
+    return GridTile(
+        child: GridTile(
+            child: Image.network(
+      '${post.postPhotoURL}',
+      fit: BoxFit.cover,
+    )));
   }
+
   Widget _profileDetails(Users? profileData) {
     return Padding(
       padding: const EdgeInsets.all(15.0),
@@ -152,18 +221,19 @@ class _ProfilePageState extends State<ProfilePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [ (profileData!.photoURL.isEmpty?
-            CircleAvatar(
-                  backgroundColor: Colors.blue[200],
-                  radius: 50.0,
-                  backgroundImage: NetworkImage('https://cdn.pixabay.com/photo/2017/08/07/13/14/black-and-white-2603731__340.jpg'),
-                )
-            :
-             CircleAvatar(
-                  backgroundColor: Colors.blue[200],
-                  radius: 50.0,
-                  backgroundImage: NetworkImage('${profileData.photoURL}'),
-                )),
+            children: [
+              (profileData!.photoURL.isEmpty
+                  ? CircleAvatar(
+                      backgroundColor: Colors.blue[200],
+                      radius: 50.0,
+                      backgroundImage: NetworkImage(
+                          'https://cdn.pixabay.com/photo/2017/08/07/13/14/black-and-white-2603731__340.jpg'),
+                    )
+                  : CircleAvatar(
+                      backgroundColor: Colors.blue[200],
+                      radius: 50.0,
+                      backgroundImage: NetworkImage('${profileData.photoURL}'),
+                    )),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -190,51 +260,73 @@ class _ProfilePageState extends State<ProfilePage> {
           SizedBox(
             height: 25.0,
           ),
-          widget.ptofileOwnerID==_activeUserID?_editProfile():_followBUtton()
+          widget.ptofileOwnerID == _activeUserID
+              ? _editProfile()
+              : _followBUtton()
         ],
       ),
     );
   }
- Widget _followBUtton(){
+
+  Widget _followBUtton() {
     return _isFollow ? _dontFollow() : _follow();
   }
+
   Widget _follow() {
     return Container(
       width: double.infinity,
       child: OutlinedButton(
-        style: ButtonStyle(
-          backgroundColor: MaterialStateColor.resolveWith((states) => Theme.of(context).primaryColor),
-          foregroundColor: MaterialStateColor.resolveWith((states) => Colors.white)
-          ),
-        onPressed: (){
-          FireStoreService().follow(_activeUserID, widget.ptofileOwnerID);
-          setState(() {
-            _isFollow=true;
-            _followers=_followers+1;
-          });
-        }
-      , child: Text("Follow", style: TextStyle(fontWeight: FontWeight.bold),)),
+          style: ButtonStyle(
+              backgroundColor: MaterialStateColor.resolveWith(
+                  (states) => Theme.of(context).primaryColor),
+              foregroundColor:
+                  MaterialStateColor.resolveWith((states) => Colors.white)),
+          onPressed: () {
+            FireStoreService().follow(_activeUserID, widget.ptofileOwnerID);
+            setState(() {
+              _isFollow = true;
+              _followers = _followers + 1;
+            });
+          },
+          child: Text(
+            "Follow",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )),
     );
   }
-  Widget _dontFollow(){
-return Container(
+
+  Widget _dontFollow() {
+    return Container(
       width: double.infinity,
-      child: OutlinedButton(onPressed: (){
-        FireStoreService().followOut(_activeUserID, widget.ptofileOwnerID);
-          setState(() {
-            _isFollow=false;
-            _followers=_followers-1;
-          });
-      }
-      , child: Text("Follow out",style: TextStyle(fontWeight: FontWeight.bold),)),
+      child: OutlinedButton(
+          onPressed: () {
+            FireStoreService().followOut(_activeUserID, widget.ptofileOwnerID);
+            setState(() {
+              _isFollow = false;
+              _followers = _followers - 1;
+            });
+          },
+          child: Text(
+            "Follow out",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )),
     );
   }
+
   Widget _editProfile() {
     return Container(
       width: double.infinity,
-      child: OutlinedButton(onPressed: () {
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => EditProfile(profile: _profileOwner,),));
-      }, child: Text("Edit Profile")),
+      child: OutlinedButton(
+          onPressed: () {
+            Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => EditProfile(
+                    profile: _profileOwner,
+                  ),
+                ));
+          },
+          child: Text("Edit Profile")),
     );
   }
 
@@ -259,9 +351,9 @@ return Container(
   }
 
   void _logout() {
-    try{
+    try {
       Provider.of<AdminService>(context, listen: false).logout();
-    }catch(error){
+    } catch (error) {
       print(error);
     }
   }
